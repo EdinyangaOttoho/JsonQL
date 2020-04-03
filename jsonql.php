@@ -386,15 +386,4 @@
 		}
 		return count($x[$key]);
 	}
-	$json = new JsonQL("./");
-	//$json->createDB("workers");
-	//$json->connect("workers", "root", "");
-	//$json->createUser("me", "password");
-	//$json->bindUser("workers", "me");
-	//$json->query("workers", "CREATE TABLE home_alone(one number, two text, three date)");
-	//$json->query("workers", "DROP TABLE home_alone");
-	//$q = $json->query("workers", "SELECT FROM home_alone");
-	//echo num_rows($q);
-	//$json->insert("workers", "home_alone", [20, "Edinyanga", "21"]);
-	//$json->delete("workers", "home_alone", ["two"=>"Edinyanga"]);
 ?>
