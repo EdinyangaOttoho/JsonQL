@@ -1,537 +1,176 @@
+# JsonQL
+A simple, lightweight implementation that leverages JSON files as databases. **CRUD** supported. The main reason for this solution is to implement database usage (or data storage) using JSON files as mediums. The library consists of some good queries that could be enacted to create databases, tables, insert data, update fields etc using filters as well.
+
+## Usage
+To use this library, include the JsonQL file into your project at the top thus;
+```php
 <?php
-	class JsonQL {
-		public $lock;
-		public $dbs;
-		public $dir;
-		public $user = "";
-		public $password = "";
-		public $database = "";
-		public $users;
-		function __construct($dir) {
-			$this->dir = preg_replace("/\/$/","",$dir);
-			$dir = $this->dir;
-			$this->lock = json_decode(file_get_contents($dir."/security.json"), 1);
-			$this->dbs = json_decode(file_get_contents($dir."/database.json"), 1);
-			$this->users = json_decode(file_get_contents($dir."/users.json"), 1);
-		}
-		function createDB($db) {
-			if (!in_array($db, $this->dbs)) {
-				array_push($this->dbs, $db);
-				$db_config = fopen($this->dir."/database.json", "w");
-				fwrite($db_config, json_encode($this->dbs));
-				fclose($db_config);
-
-				if (!in_array("databases", scandir($this->dir))) {
-					mkdir($this->dir."/databases");
-				}
-
-				$db_file = fopen($this->dir."/databases/".$db."."."json", "w");
-				fwrite($db_file, json_encode(array()));
-				fclose($db_file);
-
-				array_push($this->lock, [$db => ["user" =>"root", "password"=>""]]);
-
-				$db_sec = fopen($this->dir."/security.json", "w");
-				fwrite($db_sec, json_encode($this->lock));
-				fclose($db_sec);
-				return true;
-			}
-			else {
-				error_log("Invalid: <DB [".$db."] Already Exists>");
-				return false;
-			}
-		}
-		function connect($db, $user, $password) {
-			$arr = array();
-			$u = "";
-			$p = "";
-			foreach ($this->lock as $key=>$value) {
-				foreach ($this->lock[$key] as $k=>$v) {
-					if ($k == $db) {
-						$u = $this->lock[$key][$k]["user"];
-						$p = $this->lock[$key][$k]["password"];
-						break 2;
-					}
-				}
-			}
-			if (($u == $user && $p == $password)) {
-				$this->user = $u;
-				$this->password = $p;
-				$this->database = $db;
-				return true;
-			}
-			else {
-				error_log("AccessError: <Access Denied to user (".$user.") to DB (".$db.")>");
-				return false;
-			}
-		}
-		function bindUser($db, $user) {
-			$u = "";
-			$p = "";
-			foreach ($this->users as $key=>$value) {
-				foreach ($this->users[$key] as $k=>$v) {
-					if ($k == $user) {
-						$u = $k;
-						$p = $this->users[$key][$k]["key"];
-					}
-				}
-			}
-
-			foreach ($this->lock as $key=>$value) {
-				foreach ($this->lock[$key] as $k=>$v) {
-					if ($k == $db) {
-						$this->lock[$key][$k]["user"] = $u;
-						$this->lock[$key][$k]["password"] = $p;
-
-						$db_sec = fopen($this->dir."/security.json", "w");
-						fwrite($db_sec, json_encode($this->lock));
-						fclose($db_sec);
-
-						break 2;
-					}
-				}
-			}			
-		}
-		function createUser($user, $password) {
-			$u = array();
-			foreach ($this->users as $key=>$value) {
-				foreach ($this->users[$key] as $k=>$v) {
-					array_push($u, $k);
-				}
-			}
-			if (!in_array($user, $u)) {
-				array_push($this->users, [$user => ["key" => $password]]);
-
-				$db_user = fopen($this->dir."/users.json", "w");
-				fwrite($db_user, json_encode($this->users));
-				fclose($db_user);
-				return true;
-			}
-			else {
-				error_log("FATAL: <User [".$user."] already exists>");
-				return false;
-			}
-		}
-		function query($db, $string) {
-			$db_file = json_decode(file_get_contents($this->dir."/databases/".$db.".json"), 1);
-			if ($this->user != "" && $this->database != "" && $db == $this->database) {
-				if (stripos($string, "CREATE TABLE") === 0) {
-					$u = array();
-					$string = trim(str_ireplace("CREATE TABLE", "", $string));
-					preg_match("/^(\w|\W)+.*\(/", $string, $t);
-					$tabname = trim(str_replace("(", "", $t[0]));
-					foreach ($db_file as $key=>$value) {
-						foreach ($db_file[$key] as $k=>$v) {
-							array_push($u, $k);							 
-						}
-					}
-					if (!in_array($tabname, $u)) {
-						
-						preg_match("/\(.*\)/", $string, $c);
-						$con = preg_replace("/^\(/", "",preg_replace("/\)$/", "", $c[0]));
-						$con = preg_replace("/\,\s/", ",", $con);
-						$items = array();
-						if (preg_match("/\,/", $con)) {
-							$items = explode(",", $con);
-						}
-						else {
-							$items[0] = trim($con);
-						}
-						$data_types = array();
-						$columns = array();
-						foreach ($items as $i) {
-						 	array_push($columns, [explode(" ", $i)[0] => []]);
-						 	array_push($data_types, strtolower(explode(" ", $i)[1]));
-						}
-						$table = [$tabname => ["columns" => $columns, "data_types" => $data_types]];
-
-						array_push($db_file, $table);
-
-						$tabs = fopen($this->dir."/databases/".$db.".json", "w");
-						fwrite($tabs, json_encode($db_file));
-						fclose($tabs);
-						return true;
-					}
-					else {
-						error_log("Invalid: <Table [".$tabname."] already Exists>");
-						return false;
-					}
-				}
-				else if (stripos($string, "DROP TABLE") === 0) {
-					$string = trim(str_ireplace("DROP TABLE ", "", $string));
-					for ($i = 0;$i < count($db_file);$i++) {
-						foreach ($db_file[$i] as $key=>$value) {
-							if ($key == $string) {
-								unset($db_file[$i]);
-								array_values($db_file);
-								$tabs = fopen($this->dir."/databases/".$db.".json", "w");
-								fwrite($tabs, json_encode($db_file));
-								fclose($tabs);
-								break 2;
-								return true;
-							}
-						}
-					}
-					return false;
-				}
-				else if (stripos($string, "SELECT FROM") === 0) {
-					$string = trim(str_ireplace("SELECT FROM ", "", $string));
-					$cols = array();
-					$columns = array();
-					$return_val = array();
-					for ($i = 0;$i < count($db_file);$i++) {
-						foreach ($db_file[$i] as $key=>$value) {
-							if ($string == $key) {
-								$cols = $db_file[$i][$key]["columns"];
-								foreach ($cols as $k=>$v) {
-									foreach ($cols[$k] as $in=>$an) {
-										$columns[$in]= $an;
-									}
-								}
-								return new Handler($columns);
-								break 2;							
-							}
-						}
-					}
-					return null;
-				}
-			}
-			else {
-				error_log("Error: <No connection existent!>");
-			}
-		}
-		function insert($db, $table, $values) {
-			if ($this->user != "" && $this->database != "" && $db == $this->database) {
-				$db_file = json_decode(file_get_contents($this->dir."/databases/".$db.".json"), 1);
-				$cnt = -1;
-				for ($i = 0;$i < count($db_file);$i++) {
-					foreach ($db_file[$i] as $key=>$value) {
-						if ($table == $key) {
-							$cols = $db_file[$i][$key]["columns"];
-							foreach ($cols as $k=>$v) {
-								foreach ($cols[$k] as $in=>$an) {
-									$cnt++;
-									switch ($db_file[$i][$key]["data_types"][$cnt]) {
-										case "number":
-											if (!is_numeric($values[$cnt])) {
-												goto a;
-											}
-										break;
-										case "text":
-											if (!is_string($values[$cnt])) {
-												goto a;
-											}
-										break;
-									}
-									array_push($db_file[$i][$key]["columns"][$k][$in], trim(htmlspecialchars($values[$cnt])));
-								}
-							}
-							$tabs = fopen($this->dir."/databases/".$db.".json", "w");
-							fwrite($tabs, json_encode($db_file));
-							fclose($tabs);
-							break 2;
-						}
-					}
-				}
-			}
-			else {
-				error_log("Error: <No connection existent!>");	
-			}
-			return false;
-			a:
-			error_log("TypeError: <Invalid data type(s) provided>");
-		}
-		function update($db, $table, $x, $param) {
-			if ($this->user != "" && $this->database != "" && $db == $this->database) {
-				$db_file = json_decode(file_get_contents($this->dir."/databases/".$db.".json"), 1);
-				$to_up = array();
-				$where = "";
-				$equal = "";
-				foreach ($param as $key=>$value) {
-					$where = $key;
-					$equal = $value;
-				}
-
-				for ($i = 0;$i < count($db_file);$i++) {
-					foreach ($db_file[$i] as $key=>$value) {
-						if ($table == $key) {
-							$cols = $db_file[$i][$key]["columns"];
-							foreach ($cols as $k=>$v) {
-								foreach ($cols[$k] as $in=>$an) {
-									if ($in == $where) {
-										foreach ($db_file[$i][$key]["columns"][$k][$in] as $l=>$m) {
-											if ($m == $equal) {
-												array_push($to_up, $l);
-											}
-											foreach ($x as $n=>$o) {
-												try {
-													foreach ($to_up as $p) {
-														foreach ($db_file[$i][$key]["columns"] as $q=>$r) {
-															foreach ($db_file[$i][$key]["columns"][$q] as $s=>$t) {
-																if ($n == $s) {
-																	$db_file[$i][$key]["columns"][$q][$n][$p] = $o;
-																}
-															}
-														}
-													}
-												}
-												catch (Exception $ex) {
-													return false;
-												}
-											}
-											$tabs = fopen($this->dir."/databases/".$db.".json", "w");
-											fwrite($tabs, json_encode($db_file));
-											fclose($tabs);
-										}
-										break 4;
-									}
-								}
-							}
-						}
-					}
-				}
-				return false;
-			}
-			else {
-				error_log("Error: <No connection existent!>");	
-			}
-		}
-		function delete($db, $table, $param) {
-			if ($this->user != "" && $this->database != "" && $db == $this->database) {
-				$db_file = json_decode(file_get_contents($this->dir."/databases/".$db.".json"), 1);
-				$to_up = array();
-				$where = "";
-				$equal = "";
-				foreach ($param as $key=>$value) {
-					$where = $key;
-					$equal = $value;
-				}
-
-				for ($i = 0;$i < count($db_file);$i++) {
-					foreach ($db_file[$i] as $key=>$value) {
-						if ($table == $key) {
-							$cols = $db_file[$i][$key]["columns"];
-							foreach ($cols as $k=>$v) {
-								foreach ($cols[$k] as $in=>$an) {
-									if ($in == $where) {
-										foreach ($db_file[$i][$key]["columns"][$k][$in] as $l=>$m) {
-											if ($m == $equal) {
-												array_push($to_up, $l);
-											}
-											try {
-												foreach ($to_up as $p) {
-													foreach ($db_file[$i][$key]["columns"] as $q=>$r) {
-														foreach ($db_file[$i][$key]["columns"][$q] as $s=>$t) {
-															unset($db_file[$i][$key]["columns"][$q][$s][$p]);
-														}
-													}
-												}
-											}
-											catch (Exception $ex) {
-												return false;
-											}
-
-											$tabs = fopen($this->dir."/databases/".$db.".json", "w");
-											fwrite($tabs, json_encode($db_file));
-											fclose($tabs);
-										}
-										break 4;
-									}
-								}
-							}
-						}
-					}
-				}
-				return false;
-			}
-			else {
-				error_log("Error: <No connection existent!>");	
-			}
-		}
-		function deleteDB($db) {
-			if ($this->user != "" && $this->database != "" && $db == $this->database) {
-				$db_file = json_decode(file_get_contents($this->dir."/databases/".$db.".json"), 1);
-				unlink($this->dir."/databases/".$db.".json");
-				foreach ($this->lock as $k=>$v) {
-					if ($k == $db) {
-						unset($this->lock[$k]);
-						array_values($this->lock);
-						$tabs = fopen($this->dir."/security.json", "w");
-						fwrite($tabs, json_encode($this->lock));
-						fclose($tabs);
-						break;
-					}
-				}
-				foreach ($this->dbs as $k=>$v) {
-					if ($k == $db) {
-						unset($this->dbs[$k]);
-						array_values($this->dbs);
-						$tabs = fopen($this->dir."/database.json", "w");
-						fwrite($tabs, json_encode($this->dbs));
-						fclose($tabs);
-						break;
-					}
-				}
-			}
-			else {
-				error_log("Error: <No connection existent!>");	
-			}
-		}
-	}
-	function num_rows($x) {
-		$cnt = 0;
-		$key = "";
-		foreach ($x as $k=>$v) {
-			$cnt++;
-			if ($cnt == 1) {
-				$key = $k;
-				break;
-			}
-		}
-		return count($x[$key]);
-	}
-	class Handler {
-		public $data;
-		function __construct($data) {
-			$this->data = $data;
-		}
-		function like($x, $y) {
-			$arr = array();
-			$return_array = array();
-			switch ($y) {
-				case 0:
-					foreach ($x as $key=>$value) {
-						foreach ($this->data as $k=>$v) {
-							if ($key == $k) {
-								foreach ($this->data[$k] as $l=>$m) {
-									if (stripos(strval($m), strval($value)) === 0) {
-										array_push($arr, $l);
-									}
-								}
-							}
-						}
-					}
-					foreach ($this->data as $key=>$value) {
-						foreach ($arr as $k=>$v) {
-							$return_array[$key][$v] = $this->data[$key][$v];
-						}
-					}
-					foreach ($return_array as $k=>$v) {
-						$return_array[$k] = array_values($return_array[$k]);
-					}
-					return $return_array;
-				break;
-				case 1:
-					foreach ($x as $key=>$value) {
-						foreach ($this->data as $k=>$v) {
-							if ($key == $k) {
-								foreach ($this->data[$k] as $l=>$m) {
-									if (stripos(strval($m), strval($value)) !== false) {
-										array_push($arr, $l);
-									}
-								}
-							}
-						}
-					}
-					foreach ($this->data as $key=>$value) {
-						foreach ($arr as $k=>$v) {
-							$return_array[$key][$v] = $this->data[$key][$v];
-						}
-					}
-					foreach ($return_array as $k=>$v) {
-						$return_array[$k] = array_values($return_array[$k]);
-					}
-					return $return_array;
-				break;
-				case -1:
-					foreach ($x as $key=>$value) {
-						foreach ($this->data as $k=>$v) {
-							if ($key == $k) {
-								foreach ($this->data[$k] as $l=>$m) {
-									if (strripos(strval($m), strval($value), strlen($value) - 1) === (strlen($m) - strlen($value))) {
-										array_push($arr, $l);
-									}									
-								}
-							}
-						}
-					}
-					foreach ($this->data as $key=>$value) {
-						foreach ($arr as $k=>$v) {
-							$return_array[$key][$v] = $this->data[$key][$v];
-						}
-					}
-					foreach ($return_array as $k=>$v) {
-						$return_array[$k] = array_values($return_array[$k]);
-					}
-					return $return_array;
-				break;
-				default:
-					foreach ($x as $key=>$value) {
-						foreach ($this->data as $k=>$v) {
-							if ($key == $k) {
-								foreach ($this->data[$k] as $l=>$m) {
-									if (stripos(strval($m), strval($value)) !== false) {
-										array_push($arr, $l);
-									}
-								}
-							}
-						}
-					}
-					foreach ($this->data as $key=>$value) {
-						foreach ($arr as $k=>$v) {
-							$return_array[$key][$v] = $this->data[$key][$v];
-						}
-					}
-					foreach ($return_array as $k=>$v) {
-						$return_array[$k] = array_values($return_array[$k]);
-					}
-					return $return_array;
-				break;
-			}
-					
-		}
-		function equals($x) {
-			$arr = array();
-			$return_array = array();
-			foreach ($x as $key=>$value) {
-				foreach ($this->data as $k=>$v) {
-					if ($key == $k) {
-						foreach ($this->data[$k] as $l=>$m) {
-							if ($m == $value) {
-								array_push($arr, $l);
-							}
-						}
-					}
-				}
-			}
-			foreach ($this->data as $key=>$value) {
-				foreach ($arr as $k=>$v) {
-					$return_array[$key][$v] = $this->data[$key][$v];
-				}
-			}
-			foreach ($return_array as $k=>$v) {
-				$return_array[$k] = array_values($return_array[$k]);
-			}
-			return $return_array;
-		}
-		function all() {
-			return $this->data;
-		}
-	}
-	/*
-	<Some usage examples are shown below>
-		$json = new JsonQL("./");
-		$json->createDB("workers");
-		$json->connect("workers", "root", "");
-		$json->createUser("me", "password");
-		$json->bindUser("workers", "me");
-		$json->query("workers", "CREATE TABLE home_alone(one number, two text, three date)");
-		$json->query("workers", "DROP TABLE home_alone");
-		print_r($json->query("workers", "SELECT FROM home_alone")->like(["two"=>"l"], -1));
-		print_r($json->query("workers", "SELECT FROM home_alone")->equals(["one"=>50, "two"=>"Daniel"]));
-		echo num_rows($q);
-		$json->insert("workers", "home_alone", [50, 'Daniel', "21"]);
-		$json->delete("workers", "home_alone", ["two"=>"Edinyanga"]);
-	</Examples>
-	*/
+  include("./JsonQL/jsonql.php");
+  $jsonql = new JsonQL('./JSONQL/');
 ?>
+```
+Creating an instance of the class is shown immediately after inclusion of the Library.
+
+#### Creating Databases
+  To create databases, you run the following, you call the createDB($x) method with the argument $x being a string and the name of the database to be created. This creates a new database called students. Below is the code;
+
+```php
+<?php
+  include("./JsonQL/jsonql.php");
+  $jsonql = new JsonQL('./JSONQL/');
+  $jsonql->createDB("students");
+?>
+  
+```
+The directory parsed to the JsonQL Class above is that which contains the following files and should be noted accordingly;
+
+--- database.json
+
+--- jsonql.php
+
+--- users.php
+
+--- security.php
+
+#### Creating Users
+To create a user, you simply call the createUser($x, $y) method from the JsonQL class as thus;
+```php
+<?php
+  $jsonql->createUser('me', 'me123@#');  
+?>
+```
+The argument $x stands for the username while the $y stands for the password of the user.
+
+#### Binding Users to Databases
+To bind users to a database, you simply call the bindUser($x, $y) method from the JsonQL class as thus;
+```php
+<?php
+  $jsonql->bindUser("workers", "me");
+?>
+```
+That binds the previously created user, me to the database, workers.
+
+#### Connecting to Databases
+To connect to a database which has no user bound to it, then use the default user (root) and send the password as an empty string as arguments $user and $password respectively in the method call from the JsonQL class as shown below;
+```php
+<?php
+  $jsonql->connect($db, $user, $password);
+?>
+```
+Else, use the username and password from the user bound to the given database. $db represents the database you are connecting to.
+
+#### Queries
+There are a few queries you can make to the databases. Such as CREATE, SELECT, DELETE and UPDATE (which are the intended for this library).
+
+
+**SELECT:** To select records from a database, you call the query method, specifying the SQL thus;
+```php
+<?php
+  $jsonql->query($db, "SELECT FROM table_name");
+?>
+```
+This does not end this way, because it returns a Class instance for a Handler. Rather, to apply any filter, you call either the all() method, equals($x) or the like($x, $y) method as shown below;
+
+##### like():
+```php
+<?php
+  $jsonql->query($db, "SELECT FROM table_name")->like($array, $pattern);
+?>
+```
+The $array argument is an array which contains the columns and the values to check in the database, while the $pattern specifies the filter pattern. Either at the start of the string (0), end of the string (-1) or within the string (1) For instance, in the function below;
+```php
+<?php
+  #jsonql->query($db, "SELECT FROM table_name")->like(["name"=>"e", "email"=>"a"], 0);
+?>
+```
+The statement above is equivalent to the following in SQL;
+```sql
+  SELECT * FROM table_name WHERE name LIKE '%e' OR email LIKE '%a'
+```
+The list extends till infinity (Could reach 20 indexes of OR);
+
+##### equals():
+```php
+<?php
+  $jsonql->query($db, "SELECT FROM table_name")->equals($array);
+?>
+```
+The equals method is similar to the like, but deals with '=' instead of the LIKE clause, but takes only one argument. In the example below;
+```php
+<?php
+  $jsonql->query($db, "SELECT FROM table_name")->equals(["name"=>"Edinyanga"]);
+?>
+```
+It results to the SQL query below;
+```sql
+  SELECT * FROM table_name WHERE name = '%e'
+```
+The array parameter could contain different keys and indexes which are joined by OR just like in the like() method.
+
+##### all():
+This is very self explanatory as it fetches all the records and returns an array thus;
+```
+<?php
+  $jsonql->query($db, "SELECT FROM table_name")->all();
+?>
+```
+All the SELECT queries result to arrays which could be accessed with keys which are the column names.
+
+
+**UPDATE:** To update the records in a table in a database, you call the update() method as shown below;
+```
+<?php
+  $jsonql->update($db, $table, $x, $params);
+?>
+```
+The $x is an array containing the column names as key and the values to update as index. The $params is an array which specifies the delimiter, which is similar to the WHERE statement where the key represents the column name and the value represents the value.
+
+
+**INSERT:** To insert records into a table in a database, you call the insert() method as shown below;
+```
+<?php
+  $jsonql->insert($db, $table, $params);
+?>
+```
+The $x is an array containing the column names as key and the values to be inserted as index.
+
+
+**DELETE RECORDS:** To delete records from a table in a database, you call the delete() method as shown below;
+```
+<?php
+  $jsonql->delete($db, $table, $params);
+?>
+```
+The $params is an array which specifies the delimiter, which is similar to the WHERE statement where the key represents the column name and the value represents the value.
+
+
+**CREATE TABLES:** To create a table, you call the query() method and simply use the SQL table creation statement which has only two data types; number and text as shown below;
+```
+<?php
+  $jsonql->query($db, "CREATE TABLE table_name (id number, name text, email, text, date_created text)");
+?>
+```
+It works that simply.
+
+
+**DROP TABLES:** To delete a table, you call the query() method thus;
+```
+<?php
+  $jsonql->query($db, "DROP TABLE table_name");
+?>
+```
+In the methods above, $db and $table stand for the databases and tables respectively to be affected.
+
+#### Getting Row Count
+To get the row count from queried results, use the num_rows($q) method, not within the JsonQL class;
+```php
+  $count = num_rows($q);
+```
+Where $q is the queried data;
+
+## Contributors
+### Edinyanga Ottoho
+Edinyanga Ottoho is a Full-Stack software developer with over 3 years of experience. Stacks are HTML, CSS, Core PHP, Python/Django, EcmaScript 4/6, React Native/NodeJS. A huge reason why the Library is alive.
+You can view my profile via this link (https://www.github.com/EdinyangaOttoho) OR Call +2348117093601 (WhatsApp).
+
+<img src="https://avatars3.githubusercontent.com/u/45470783?s=460&v=4" style="width:300px;height:330px">
