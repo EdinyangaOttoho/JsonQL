@@ -3,11 +3,11 @@ A simple, lightweight implementation that leverages JSON files as databases. **C
 
 ## Usage
 To use this library, include the JsonQL file into your project at the top thus;
-'''php
+```php
 <?php
   include("./JsonQL/jsonql.php");
 ?>
-'''
+```
 
 ## Contributors
 ### Edinyanga Ottoho
