@@ -21,6 +21,10 @@
 				fwrite($db_config, json_encode($this->dbs));
 				fclose($db_config);
 
+				if (!in_array("databases", scandir($this->dir))) {
+					mkdir($this->dir."/databases");
+				}
+
 				$db_file = fopen($this->dir."/databases/".$db."."."json", "w");
 				fwrite($db_file, json_encode(array()));
 				fclose($db_file);
