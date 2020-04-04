@@ -54,7 +54,7 @@
 					}
 				}
 			}
-			if (($u == $user && $p == $password) || ($user == "root" && $password == "")) {
+			if (($u == $user && $p == $password)) {
 				$this->user = $u;
 				$this->password = $p;
 				$this->database = $db;
@@ -525,10 +525,10 @@
 		$json->connect("workers", "root", "");
 		$json->createUser("me", "password");
 		$json->bindUser("workers", "me");
-		$json->query("workers", "CREATE TABLE home_alone(one number, two text, three date)");
+		$json->query("workers", "CREATE TABLE home_alone(one number, two text, three text)");
 		$json->query("workers", "DROP TABLE home_alone");
-		print_r($json->query("workers", "SELECT FROM home_alone")->like(["two"=>"l"], -1));
-		print_r($json->query("workers", "SELECT FROM home_alone")->equals(["one"=>50, "two"=>"Daniel"]));
+		$q = $json->query("workers", "SELECT FROM home_alone")->like(["two"=>"l"], -1);
+		$json->query("workers", "SELECT FROM home_alone")->equals(["one"=>50, "two"=>"Daniel"]);
 		echo num_rows($q);
 		$json->insert("workers", "home_alone", [50, 'Daniel', "21"]);
 		$json->delete("workers", "home_alone", ["two"=>"Edinyanga"]);
