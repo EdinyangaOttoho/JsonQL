@@ -184,7 +184,7 @@
 										$columns[$in]= $an;
 									}
 								}
-								return $columns;
+								return new Handler($columns);
 								break 2;							
 							}
 						}
@@ -386,4 +386,148 @@
 		}
 		return count($x[$key]);
 	}
+	class Handler {
+		public $data;
+		function __construct($data) {
+			$this->data = $data;
+		}
+		function like($x, $y) {
+			$arr = array();
+			$return_array = array();
+			switch ($y) {
+				case 0:
+					foreach ($x as $key=>$value) {
+						foreach ($this->data as $k=>$v) {
+							if ($key == $k) {
+								foreach ($this->data[$k] as $l=>$m) {
+									if (stripos(strval($m), strval($value)) === 0) {
+										array_push($arr, $l);
+									}
+								}
+							}
+						}
+					}
+					foreach ($this->data as $key=>$value) {
+						foreach ($arr as $k=>$v) {
+							$return_array[$key][$v] = $this->data[$key][$v];
+						}
+					}
+					foreach ($return_array as $k=>$v) {
+						$return_array[$k] = array_values($return_array[$k]);
+					}
+					return $return_array;
+				break;
+				case 1:
+					foreach ($x as $key=>$value) {
+						foreach ($this->data as $k=>$v) {
+							if ($key == $k) {
+								foreach ($this->data[$k] as $l=>$m) {
+									if (stripos(strval($m), strval($value)) !== false) {
+										array_push($arr, $l);
+									}
+								}
+							}
+						}
+					}
+					foreach ($this->data as $key=>$value) {
+						foreach ($arr as $k=>$v) {
+							$return_array[$key][$v] = $this->data[$key][$v];
+						}
+					}
+					foreach ($return_array as $k=>$v) {
+						$return_array[$k] = array_values($return_array[$k]);
+					}
+					return $return_array;
+				break;
+				case -1:
+					foreach ($x as $key=>$value) {
+						foreach ($this->data as $k=>$v) {
+							if ($key == $k) {
+								foreach ($this->data[$k] as $l=>$m) {
+									if (strripos(strval($m), strval($value), strlen($value) - 1) === (strlen($m) - strlen($value))) {
+										array_push($arr, $l);
+									}									
+								}
+							}
+						}
+					}
+					foreach ($this->data as $key=>$value) {
+						foreach ($arr as $k=>$v) {
+							$return_array[$key][$v] = $this->data[$key][$v];
+						}
+					}
+					foreach ($return_array as $k=>$v) {
+						$return_array[$k] = array_values($return_array[$k]);
+					}
+					return $return_array;
+				break;
+				default:
+					foreach ($x as $key=>$value) {
+						foreach ($this->data as $k=>$v) {
+							if ($key == $k) {
+								foreach ($this->data[$k] as $l=>$m) {
+									if (stripos(strval($m), strval($value)) !== false) {
+										array_push($arr, $l);
+									}
+								}
+							}
+						}
+					}
+					foreach ($this->data as $key=>$value) {
+						foreach ($arr as $k=>$v) {
+							$return_array[$key][$v] = $this->data[$key][$v];
+						}
+					}
+					foreach ($return_array as $k=>$v) {
+						$return_array[$k] = array_values($return_array[$k]);
+					}
+					return $return_array;
+				break;
+			}
+					
+		}
+		function equals($x) {
+			$arr = array();
+			$return_array = array();
+			foreach ($x as $key=>$value) {
+				foreach ($this->data as $k=>$v) {
+					if ($key == $k) {
+						foreach ($this->data[$k] as $l=>$m) {
+							if ($m == $value) {
+								array_push($arr, $l);
+							}
+						}
+					}
+				}
+			}
+			foreach ($this->data as $key=>$value) {
+				foreach ($arr as $k=>$v) {
+					$return_array[$key][$v] = $this->data[$key][$v];
+				}
+			}
+			foreach ($return_array as $k=>$v) {
+				$return_array[$k] = array_values($return_array[$k]);
+			}
+			return $return_array;
+		}
+		function all() {
+			return $this->data;
+		}
+	}
+	/*
+	<Some usage examples are shown below>
+		$json = new JsonQL("./");
+		$json->createDB("workers");
+		$json->connect("workers", "root", "");
+		$json->createUser("me", "password");
+		$json->bindUser("workers", "me");
+		$json->query("workers", "CREATE TABLE home_alone(one number, two text, three date)");
+		$json->query("workers", "DROP TABLE home_alone");
+		print_r($json->query("workers", "SELECT FROM home_alone")->like(["two"=>"l"], -1));
+		print_r($json->query("workers", "SELECT FROM home_alone")->equals(["one"=>50, "two"=>"Daniel"]));
+		echo num_rows($q);
+		$json->insert("workers", "home_alone", [50, 'Daniel', "21"]);
+		$json->delete("workers", "home_alone", ["two"=>"Edinyanga"]);
+	</Examples>
+	*/
 ?>
