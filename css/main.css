@@ -1,0 +1,21 @@
+.delete {
+	background-color:white;
+	color:tomato;
+	border:0px;
+}
+.update {
+	background-color:white;
+	color:green;
+	border:0px;
+}
+.ui_design input {
+	border:1px solid gray;
+	padding:3px;
+	width:100%;
+}
+.ui_design button {
+	cursor:hand;
+	padding:5px;
+	border-radius:2px;
+	outline:none
+}
