@@ -1,3 +1,5 @@
+<link rel="stylesheet" href="./css/font-awesome.min.css">
+<link rel="stylesheet" href="./css/main.css">
 <?php
 	class JsonQL {
 		public $lock;
@@ -29,7 +31,7 @@
 				fwrite($db_file, json_encode(array()));
 				fclose($db_file);
 
-				array_push($this->lock, [$db => ["user" =>"root", "password"=>""]]);
+				array_push($this->lock, [$db => ["user" =>"root", "password"=>md5("")]]);
 
 				$db_sec = fopen($this->dir."/security.json", "w");
 				fwrite($db_sec, json_encode($this->lock));
@@ -54,7 +56,7 @@
 					}
 				}
 			}
-			if (($u == $user && $p == $password)) {
+			if (($u == $user && md5($p) == $password)) {
 				$this->user = $u;
 				$this->password = $p;
 				$this->database = $db;
@@ -100,7 +102,7 @@
 				}
 			}
 			if (!in_array($user, $u)) {
-				array_push($this->users, [$user => ["key" => $password]]);
+				array_push($this->users, [$user => ["key" => md5($password)]]);
 
 				$db_user = fopen($this->dir."/users.json", "w");
 				fwrite($db_user, json_encode($this->users));
@@ -516,6 +518,167 @@
 		}
 		function all() {
 			return $this->data;
+		}
+	}
+
+
+	class JsonUI {
+		public $lock;
+		public $dbs;
+		public $dir;
+		public $users;
+		function __construct($dir) {
+			$this->dir = preg_replace("/\/$/","",$dir);
+			$dir = $this->dir;
+			$this->lock = json_decode(file_get_contents($dir."/security.json"), 1);
+			$this->dbs = json_decode(file_get_contents($dir."/database.json"), 1);
+			$this->users = json_decode(file_get_contents($dir."/users.json"), 1);
+		}
+		function login($user, $password) {
+			@session_start();
+			$dbs = array();
+			foreach ($this->lock as $key=>$value) {
+				foreach ($this->lock[$key] as $k=>$v) {
+					if ($this->lock[$key][$k]["user"] == $user && $this->lock[$key][$k]["password"] == md5($password)) {
+						$_SESSION['user'] = $user;
+						$_SESSION['password'] = $password;
+						array_push($dbs, $k);
+					}					
+				}
+			}
+			if ($dbs != array()) {
+				$_SESSION['dbs'] = $dbs;
+				return true;
+			}
+			else {
+				unset($_SESSION['dbs']);
+				unset($_SESSION['user']);
+				unset($_SESSION['password']);
+				return false;
+			}
+		}
+		function getDBs() {
+			@session_start();
+			$dbs = $_SESSION["dbs"];
+			return $dbs;
+		}
+		function getTabs($db) {
+			$db_file = json_decode(file_get_contents($this->dir."/databases/".$db.".json"), 1);
+			$array = array();
+			@session_start();
+			foreach ($db_file as $k=>$v) {
+				foreach ($db_file[$k] as $key=>$value) {
+					array_push($array, $key);
+				}
+			}
+			return $array;
+		}
+		function getRows($db, $tab) {
+			$db_file = json_decode(file_get_contents($this->dir."/databases/".$db.".json"), 1);
+			$arr = array();
+			$cnt = 0;
+			$num = 0;
+			$names = array();
+			foreach ($db_file as $k=>$v) {
+				foreach ($db_file[$k] as $key=>$value) {
+					foreach ($db_file[$k][$key]["columns"] as $l=>$m) {
+						foreach ($db_file[$k][$key]["columns"][$l] as $n=>$o) {
+							$num = count($db_file[$k][$key]["columns"][$l][$n]);
+							array_push($names, $n);
+							$arr[$n] = $o;
+						}
+					}
+				}
+			}
+			$cnt = count($arr);
+			$names = array_unique($names);?>
+			<table class="ui_design table table-striped table-bordered" style="width:100%">
+				<thead>
+					<tr>
+						<?php
+							foreach ($names as $n) {?>
+								<th><?php echo $n; ?></th>
+							<?php
+							}	
+						?>
+						<th colspan="2">
+							Action
+						</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+					<?php
+						$gen = 0;
+						for ($i = 0; $i < $num; $i++) {
+							foreach ($arr as $k=>$v) {
+								$gen++;
+								if ($gen % $cnt == 0) {?>
+										<td>
+											<input type="text" value="<?php echo $arr[$k][$i];?>" name="<?php echo $k; ?>">
+										</td>
+										<td>
+											<button class="update" value="<?php echo $i; ?>"><i class="fa fa-pencil fa-1x"></i></button>
+										</td>
+										<td>
+											<button class="delete" value="<?php echo $i; ?>"><i class="fa fa-trash fa-1x"></i></button>
+										</td>
+									</tr>
+								<?php
+								}
+								else {?>
+									<td>
+										<input type="text" value="<?php echo $arr[$k][$i];?>" name="<?php echo $k; ?>">
+									</td>
+								<?php
+								}
+							}
+						}
+					?>	
+				</tbody>
+			</table>
+			<?php
+		}
+		function updateRow($x, $y) {
+			$db = $_SESSION["db"];
+			$table = $_SESSION["table"];
+			$db_file = json_decode(file_get_contents($this->dir."/databases/".$db.".json"), 1);
+			@session_start();
+			$cnt = -1;
+			foreach ($db_file as $key=>$value) {
+				foreach ($db_file[$key] as $k=>$v) {
+					foreach ($db_file[$key][$k]["columns"] as $l=>$m) {
+						foreach ($db_file[$key][$k]["columns"][$l] as $n=>$o) {
+							$cnt++;
+							$db_file[$key][$k]["columns"][$l][$n][$y] = trim(htmlspecialchars($x[$cnt]));
+						}						
+					}
+				}
+				break;
+			}
+			$tabs = fopen($this->dir."/databases/".$db.".json", "w");
+			fwrite($tabs, json_encode($db_file));
+			fclose($tabs);
+		}
+		function deleteRow($x) {
+			@session_start();
+			$x = intval($x);
+			$db = $_SESSION["db"];
+			$table = $_SESSION["table"];
+			$db_file = json_decode(file_get_contents($this->dir."/databases/".$db.".json"), 1);
+			foreach ($db_file as $key=>$value) {
+				foreach ($db_file[$key] as $k=>$v) {
+					foreach ($db_file[$key][$k]["columns"] as $l=>$m) {
+						foreach ($db_file[$key][$k]["columns"][$l] as $n=>$o) {
+							array_splice($db_file[$key][$k]["columns"][$l][$n], $x, 1);
+						}						
+					}
+				}
+				break;
+			}
+			$tabs = fopen($this->dir."/databases/".$db.".json", "w");
+			fwrite($tabs, json_encode($db_file));
+			fclose($tabs);	
 		}
 	}
 	/*
