@@ -80,7 +80,7 @@ This does not end this way, because it returns a Class instance for a Handler. R
 The $array argument is an array which contains the columns and the values to check in the database, while the $pattern specifies the filter pattern. Either at the start of the string (0), end of the string (-1) or within the string (1) For instance, in the function below;
 ```php
 <?php
-  #jsonql->query($db, "SELECT FROM table_name")->like(["name"=>"e", "email"=>"a"], 0);
+  $jsonql->query($db, "SELECT FROM table_name")->like(["name"=>"e", "email"=>"a"], 0);
 ?>
 ```
 The statement above is equivalent to the following in SQL;
