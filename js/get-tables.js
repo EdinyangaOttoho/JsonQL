@@ -79,12 +79,14 @@ _("insert_pop").onclick = function() {
 	$('.ui.modal')
 	  .modal('show')
 	;
-	values_to_add = [];
+	values_to_add = new Array();
 	var tab_elem = document.querySelectorAll(".tab_titles");
 	var cnt = tab_elem.length;
+	_("title_tab").innerHTML = '';
+	_("insert_tab").innerHTML = '';
 	for (i = 0; i < cnt; i++) {
 		_("title_tab").innerHTML += '<th>'+ tab_elem[i].innerHTML +'</th>';
-		_("insert_tab").innerHTML += '<td><input class="input_fields"></td>';
+		_("insert_tab").innerHTML += '<td title="'+ tab_elem[i].innerHTML +'"><input class="input_fields"></td>';
 	}
 }
 _("insert").onclick = function() {
