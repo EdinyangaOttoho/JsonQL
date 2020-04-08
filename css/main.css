@@ -1,3 +1,60 @@
+.nav, .main, .side_bar {
+	transition:0.5s
+}
+.nav {
+	position:fixed;
+	top:0px;
+	left:250px;
+	width:calc(100vw - 250px);
+	height:60px;
+	background-color:white;
+	box-shadow:0px 0px 3px 1px lightgray;
+	z-index:2;
+	padding:0px 20px 0px 20px;
+	box-sizing:border-box;
+}
+.main {
+	position:fixed;
+	top:60px;
+	z-index:1;
+	left:250px;
+	width:calc(100vw - 250px);
+	height:calc(100vh - 60px);
+	background-color:white;
+	padding:20px;
+	overflow-y:auto;
+	box-sizing:border-box;
+}
+.side_bar {
+	position:fixed;
+	left:0px;
+	background-color:#f2f2f2;
+	z-index:3;
+	width:250px;
+	padding:10px;
+	box-sizing:border-box;
+	height:100vh;
+	top:0px;
+}
+.widgets {
+	background-color:transparent;
+	transition:0.5s;
+	border:0px;
+	font-size:25px;
+	cursor:hand;
+	outline:none!important;
+}
+.modal {
+	padding:20px;
+}
+.side_tab {
+	height:calc(100vh - 150px);
+	overflow-y:auto;
+	width:100%;
+}
+.widgets:hover {
+	color:gray;
+}
 .delete {
 	background-color:white;
 	color:tomato;
@@ -18,4 +75,14 @@
 	padding:5px;
 	border-radius:2px;
 	outline:none
+}
+.input_fields {
+	width:100%;
+	padding:5px;
+	border:1px solid gray;
+	border-radius:3px
+}
+.icon {
+	width:180px;
+	height:55px
 }
