@@ -1,5 +1,3 @@
-<link rel="stylesheet" href="./css/font-awesome.min.css">
-<link rel="stylesheet" href="./css/main.css">
 <?php
 	class JsonQL {
 		public $lock;
@@ -12,9 +10,9 @@
 		function __construct($dir) {
 			$this->dir = preg_replace("/\/$/","",$dir);
 			$dir = $this->dir;
-			$this->lock = json_decode(base64_decode(file_get_contents($dir."/security.json"), 1));
-			$this->dbs = json_decode(base64_decode(file_get_contents($dir."/database.json"), 1));
-			$this->users = json_decode(base64_decode(file_get_contents($dir."/users.json"), 1));
+			$this->lock = json_decode(base64_decode(file_get_contents($dir."/security.json")), 1);
+			$this->dbs = json_decode(base64_decode(file_get_contents($dir."/database.json")), 1);
+			$this->users = json_decode(base64_decode(file_get_contents($dir."/users.json")), 1);
 		}
 		function createDB($db) {
 			if (!in_array($db, $this->dbs)) {
@@ -56,7 +54,7 @@
 					}
 				}
 			}
-			if (($u == $user && md5($p) == $password)) {
+			if (($u == $user && $p == md5($password))) {
 				$this->user = $u;
 				$this->password = $p;
 				$this->database = $db;
@@ -115,7 +113,7 @@
 			}
 		}
 		function query($db, $string) {
-			$db_file = json_decode(base64_decode(file_get_contents($this->dir."/databases/".$db.".json"), 1));
+			$db_file = json_decode(base64_decode(file_get_contents($this->dir."/databases/".$db.".json")), 1);
 			if ($this->user != "" && $this->database != "" && $db == $this->database) {
 				if (stripos($string, "CREATE TABLE") === 0) {
 					$u = array();
@@ -204,7 +202,7 @@
 		}
 		function insert($db, $table, $values) {
 			if ($this->user != "" && $this->database != "" && $db == $this->database) {
-				$db_file = json_decode(base64_decode(file_get_contents($this->dir."/databases/".$db.".json"), 1));
+				$db_file = json_decode(base64_decode(file_get_contents($this->dir."/databases/".$db.".json")), 1);
 				$cnt = -1;
 				for ($i = 0;$i < count($db_file);$i++) {
 					foreach ($db_file[$i] as $key=>$value) {
@@ -245,7 +243,7 @@
 		}
 		function update($db, $table, $x, $param) {
 			if ($this->user != "" && $this->database != "" && $db == $this->database) {
-				$db_file = json_decode(json_decode(file_get_contents($this->dir."/databases/".$db.".json"), 1));
+				$db_file = json_decode(json_decode(file_get_contents($this->dir."/databases/".$db.".json")), 1);
 				$to_up = array();
 				$where = "";
 				$equal = "";
@@ -300,7 +298,7 @@
 		}
 		function delete($db, $table, $param) {
 			if ($this->user != "" && $this->database != "" && $db == $this->database) {
-				$db_file = json_decode(base64_decode(file_get_contents($this->dir."/databases/".$db.".json"), 1));
+				$db_file = json_decode(base64_decode(file_get_contents($this->dir."/databases/".$db.".json")), 1);
 				$to_up = array();
 				$where = "";
 				$equal = "";
@@ -352,7 +350,7 @@
 		}
 		function deleteDB($db) {
 			if ($this->user != "" && $this->database != "" && $db == $this->database) {
-				$db_file = json_decode(base64_decode(file_get_contents($this->dir."/databases/".$db.".json"), 1));
+				$db_file = json_decode(base64_decode(file_get_contents($this->dir."/databases/".$db.".json")), 1);
 				unlink($this->dir."/databases/".$db.".json");
 				foreach ($this->lock as $k=>$v) {
 					if ($k == $db) {
@@ -530,9 +528,9 @@
 		function __construct($dir) {
 			$this->dir = preg_replace("/\/$/","",$dir);
 			$dir = $this->dir;
-			$this->lock = json_decode(base64_decode(file_get_contents($dir."/security.json"), 1));
-			$this->dbs = json_decode(base64_decode(file_get_contents($dir."/database.json"), 1));
-			$this->users = json_decode(base64_decode(file_get_contents($dir."/users.json"), 1));
+			$this->lock = json_decode(base64_decode(file_get_contents($dir."/security.json")), 1);
+			$this->dbs = json_decode(base64_decode(file_get_contents($dir."/database.json")), 1);
+			$this->users = json_decode(base64_decode(file_get_contents($dir."/users.json")), 1);
 		}
 		function login($user, $password) {
 			@session_start();
@@ -563,7 +561,7 @@
 			return $dbs;
 		}
 		function getTabs($db) {
-			$db_file = json_decode(base64_decode(file_get_contents($this->dir."/databases/".$db.".json"), 1));
+			$db_file = json_decode(base64_decode(file_get_contents($this->dir."/databases/".$db.".json")), 1);
 			$array = array();
 			@session_start();
 			foreach ($db_file as $k=>$v) {
@@ -574,7 +572,7 @@
 			return $array;
 		}
 		function getRows($db, $tab) {
-			$db_file = json_decode(base64_decode(file_get_contents($this->dir."/databases/".$db.".json"), 1));
+			$db_file = json_decode(base64_decode(file_get_contents($this->dir."/databases/".$db.".json")), 1);
 			$arr = array();
 			$cnt = 0;
 			$num = 0;
@@ -642,7 +640,7 @@
 		function updateRow($x, $y) {
 			$db = $_SESSION["db"];
 			$table = $_SESSION["table"];
-			$db_file = json_decode(base64_decode(file_get_contents($this->dir."/databases/".$db.".json"), 1));
+			$db_file = json_decode(base64_decode(file_get_contents($this->dir."/databases/".$db.".json")), 1);
 			@session_start();
 			$cnt = -1;
 			foreach ($db_file as $key=>$value) {
@@ -665,7 +663,7 @@
 			$x = intval($x);
 			$db = $_SESSION["db"];
 			$table = $_SESSION["table"];
-			$db_file = json_decode(base64_decode(file_get_contents($this->dir."/databases/".$db.".json"), 1));
+			$db_file = json_decode(base64_decode(file_get_contents($this->dir."/databases/".$db.".json")), 1);
 			foreach ($db_file as $key=>$value) {
 				foreach ($db_file[$key] as $k=>$v) {
 					foreach ($db_file[$key][$k]["columns"] as $l=>$m) {
@@ -681,6 +679,11 @@
 			fclose($tabs);	
 		}
 	}
+	$json = new JsonQL("./");
+		$json->createDB("workers");
+		$json->connect("workers", "root", "");
+		$json->query("workers", "CREATE TABLE home_alone(one number, two text, three text)");
+		$json->insert("workers", "home_alone", [50, 'Daniel', "21"]);
 	/*
 	<Some usage examples are shown below>
 		$json = new JsonQL("./");
