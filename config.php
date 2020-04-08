@@ -32,6 +32,14 @@
 				echo "error";
 			}	
 		}
+		else if (isset($_POST["insert"])) {
+			try {
+				$jsonui->insertRow($_POST['insert']);
+			}
+			catch (Exception $ex) {
+				echo "error";
+			}	
+		}
 	}
 	else if ($_SERVER["REQUEST_METHOD"] == "GET") {
 		if (isset($_GET["logout"])) {
@@ -52,4 +60,5 @@
 	//$jsonui->getDBs();
 	//$jsonui->getTabs();
 	//$jsonui->getRows("workers", "home_alone");
+	//$jsonui->insertRow("", []);
 ?>
