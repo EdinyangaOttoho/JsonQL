@@ -595,7 +595,7 @@
 					<tr>
 						<?php
 							foreach ($names as $n) {?>
-								<th><?php echo $n; ?></th>
+								<th class="tab_titles"><?php echo $n; ?></th>
 							<?php
 							}	
 						?>
