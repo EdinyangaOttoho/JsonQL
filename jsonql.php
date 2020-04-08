@@ -678,6 +678,12 @@
 			fwrite($tabs, base64_encode(json_encode($db_file)));
 			fclose($tabs);	
 		}
+		function insertRow($arr) {
+			@session_start();
+			$json = new JsonQL("./");
+			$json->connect($_SESSION["db"], $_SESSION["user"], $_SESSION["password"]);
+			$json->insert($_SESSION["db"], $_SESSION["table"], $arr);
+		}
 	}
 	/*
 	<Some usage examples are shown below>
