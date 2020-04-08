@@ -11,7 +11,7 @@
 ?>
 <html>
 <head>
-	<title>JsonQL | Table</title>
+	<title>JsonQL | Tables</title>
 	<link rel="stylesheet" href="./css/dataTables.bootstrap4.min.css">
 	<link rel="stylesheet" href="./css/font-awesome.min.css">
 	<link rel="stylesheet" href="./css/bootstrap.min.css">
