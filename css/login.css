@@ -1,0 +1,14 @@
+.center_modal {
+	padding:20px;
+	border-radius:4px;
+	box-shadow:0px 0px 4px 1px lightgray;
+	width:45vw;
+	box-sizing:border-box;
+	top:50px;
+	position:relative;
+}
+@media(max-width:800px) {
+	.center_modal {
+		width:92vw;
+	}
+}
