@@ -5,7 +5,14 @@
 	if ($_SERVER["REQUEST_METHOD"] == "POST") {
 		if (isset($_POST['values']) && isset($_POST["index"])) {
 			try {
-				$jsonui->updateRow($_POST['values'], $_POST['index']);
+				$n = array();
+				if (strpos($_POST["values"], ',') !== false) {
+					$n = explode(",", $_POST["values"]);
+				}
+				else {
+					array_push($n, $_POST["values"]);
+				}
+				$jsonui->updateRow($n, $_POST['index']);
 			}
 			catch (Exception $ex) {
 				echo "error";
@@ -17,11 +24,11 @@
 					header("location:./");
 				}
 				else {
-					header("location:./login.php");
+					header("location:./login.php?error=true");
 				}
 			}
 			catch (Exception $ex) {
-				header("location:./login.php");
+				header("location:./login.php?error=true");
 			}	
 		}
 		else if (isset($_POST["index"]) && !isset($_POST["values"])) {
@@ -34,7 +41,14 @@
 		}
 		else if (isset($_POST["insert"])) {
 			try {
-				$jsonui->insertRow($_POST['insert']);
+				$n = array();
+				if (strpos($_POST["insert"], ',') !== false) {
+					$n = explode(",", $_POST["insert"]);
+				}
+				else {
+					array_push($n, $_POST["insert"]);
+				}
+				$jsonui->insertRow($n);
 			}
 			catch (Exception $ex) {
 				echo "error";
