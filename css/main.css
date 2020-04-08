@@ -66,9 +66,12 @@
 	border:0px;
 }
 .ui_design input {
-	border:1px solid gray;
-	padding:3px;
+	border:1px solid lightgray;
+	padding:5px;
+	height:100%;
+	box-sizing:border-box;
 	width:100%;
+	outline:none
 }
 .ui_design button {
 	cursor:hand;
