@@ -213,12 +213,12 @@
 									$cnt++;
 									switch ($db_file[$i][$key]["data_types"][$cnt]) {
 										case "number":
-											if (!is_numeric($values[$cnt])) {
+											if (!is_numeric(floatval($values[$cnt]))) {
 												goto a;
 											}
 										break;
 										case "text":
-											if (!is_string($values[$cnt])) {
+											if (!is_string(strval($values[$cnt]))) {
 												goto a;
 											}
 										break;
@@ -590,7 +590,7 @@
 			}
 			$cnt = count($arr);
 			$names = array_unique($names);?>
-			<table class="ui_design table table-striped table-bordered" style="width:100%">
+			<table class="ui_design table table-striped table-bordered" style="width:100%" id="tab">
 				<thead>
 					<tr>
 						<?php
@@ -599,21 +599,20 @@
 							<?php
 							}	
 						?>
-						<th colspan="2">
-							Action
-						</th>
+						<th></th>
+						<th></th>
 					</tr>
 				</thead>
 				<tbody>
-					<tr>
-					<?php
+					<tr><?php
 						$gen = 0;
 						for ($i = 0; $i < $num; $i++) {
 							foreach ($arr as $k=>$v) {
 								$gen++;
 								if ($gen % $cnt == 0) {?>
 										<td>
-											<input type="text" value="<?php echo $arr[$k][$i];?>" name="<?php echo $k; ?>">
+											<span style="display:none"><?php echo $arr[$k][$i];?></span>
+											<input type="text" value="<?php echo $arr[$k][$i];?>" name="<?php echo $k; ?>" class="inputs">
 										</td>
 										<td>
 											<button class="update" value="<?php echo $i; ?>"><i class="fa fa-pencil fa-1x"></i></button>
@@ -622,17 +621,28 @@
 											<button class="delete" value="<?php echo $i; ?>"><i class="fa fa-trash fa-1x"></i></button>
 										</td>
 									</tr>
+									<tr>
 								<?php
 								}
 								else {?>
 									<td>
-										<input type="text" value="<?php echo $arr[$k][$i];?>" name="<?php echo $k; ?>">
+										<span style="display:none"><?php echo $arr[$k][$i];?></span>
+										<input type="text" value="<?php echo $arr[$k][$i];?>" name="<?php echo $k; ?>" class="inputs">
 									</td>
 								<?php
 								}
 							}
 						}
-					?>	
+					?>
+					<?php
+						foreach ($names as $x) {?>
+							<td></td>
+						<?php
+						}
+					?>
+					<td></td>
+					<td></td>
+				</tr>
 				</tbody>
 			</table>
 			<?php
