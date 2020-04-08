@@ -679,11 +679,6 @@
 			fclose($tabs);	
 		}
 	}
-	$json = new JsonQL("./");
-		$json->createDB("workers");
-		$json->connect("workers", "root", "");
-		$json->query("workers", "CREATE TABLE home_alone(one number, two text, three text)");
-		$json->insert("workers", "home_alone", [50, 'Daniel', "21"]);
 	/*
 	<Some usage examples are shown below>
 		$json = new JsonQL("./");
