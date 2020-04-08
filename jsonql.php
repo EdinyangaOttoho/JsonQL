@@ -1,3 +1,5 @@
+<link rel="stylesheet" href="./css/font-awesome.min.css">
+<link rel="stylesheet" href="./css/main.css">
 <?php
 	class JsonQL {
 		public $lock;
@@ -10,15 +12,15 @@
 		function __construct($dir) {
 			$this->dir = preg_replace("/\/$/","",$dir);
 			$dir = $this->dir;
-			$this->lock = json_decode(file_get_contents($dir."/security.json"), 1);
-			$this->dbs = json_decode(file_get_contents($dir."/database.json"), 1);
-			$this->users = json_decode(file_get_contents($dir."/users.json"), 1);
+			$this->lock = json_decode(base64_decode(file_get_contents($dir."/security.json"), 1));
+			$this->dbs = json_decode(base64_decode(file_get_contents($dir."/database.json"), 1));
+			$this->users = json_decode(base64_decode(file_get_contents($dir."/users.json"), 1));
 		}
 		function createDB($db) {
 			if (!in_array($db, $this->dbs)) {
 				array_push($this->dbs, $db);
 				$db_config = fopen($this->dir."/database.json", "w");
-				fwrite($db_config, json_encode($this->dbs));
+				fwrite($db_config, base64_encode(json_encode($this->dbs)));
 				fclose($db_config);
 
 				if (!in_array("databases", scandir($this->dir))) {
@@ -26,13 +28,13 @@
 				}
 
 				$db_file = fopen($this->dir."/databases/".$db."."."json", "w");
-				fwrite($db_file, json_encode(array()));
+				fwrite($db_file, base64_encode(json_encode(array())));
 				fclose($db_file);
 
 				array_push($this->lock, [$db => ["user" =>"root", "password"=>md5("")]]);
 
 				$db_sec = fopen($this->dir."/security.json", "w");
-				fwrite($db_sec, json_encode($this->lock));
+				fwrite($db_sec, base64_encode(json_encode($this->lock)));
 				fclose($db_sec);
 				return true;
 			}
@@ -84,7 +86,7 @@
 						$this->lock[$key][$k]["password"] = $p;
 
 						$db_sec = fopen($this->dir."/security.json", "w");
-						fwrite($db_sec, json_encode($this->lock));
+						fwrite($db_sec, base64_encode(json_encode($this->lock)));
 						fclose($db_sec);
 
 						break 2;
@@ -103,7 +105,7 @@
 				array_push($this->users, [$user => ["key" => md5($password)]]);
 
 				$db_user = fopen($this->dir."/users.json", "w");
-				fwrite($db_user, json_encode($this->users));
+				fwrite($db_user, base64_encode(json_encode($this->users)));
 				fclose($db_user);
 				return true;
 			}
@@ -113,7 +115,7 @@
 			}
 		}
 		function query($db, $string) {
-			$db_file = json_decode(file_get_contents($this->dir."/databases/".$db.".json"), 1);
+			$db_file = json_decode(base64_decode(file_get_contents($this->dir."/databases/".$db.".json"), 1));
 			if ($this->user != "" && $this->database != "" && $db == $this->database) {
 				if (stripos($string, "CREATE TABLE") === 0) {
 					$u = array();
@@ -148,7 +150,7 @@
 						array_push($db_file, $table);
 
 						$tabs = fopen($this->dir."/databases/".$db.".json", "w");
-						fwrite($tabs, json_encode($db_file));
+						fwrite($tabs, base64_encode(json_encode($db_file)));
 						fclose($tabs);
 						return true;
 					}
@@ -165,7 +167,7 @@
 								unset($db_file[$i]);
 								array_values($db_file);
 								$tabs = fopen($this->dir."/databases/".$db.".json", "w");
-								fwrite($tabs, json_encode($db_file));
+								fwrite($tabs, base64_encode(json_encode($db_file)));
 								fclose($tabs);
 								break 2;
 								return true;
@@ -202,7 +204,7 @@
 		}
 		function insert($db, $table, $values) {
 			if ($this->user != "" && $this->database != "" && $db == $this->database) {
-				$db_file = json_decode(file_get_contents($this->dir."/databases/".$db.".json"), 1);
+				$db_file = json_decode(base64_decode(file_get_contents($this->dir."/databases/".$db.".json"), 1));
 				$cnt = -1;
 				for ($i = 0;$i < count($db_file);$i++) {
 					foreach ($db_file[$i] as $key=>$value) {
@@ -227,7 +229,7 @@
 								}
 							}
 							$tabs = fopen($this->dir."/databases/".$db.".json", "w");
-							fwrite($tabs, json_encode($db_file));
+							fwrite($tabs, base64_encode(json_encode($db_file)));
 							fclose($tabs);
 							break 2;
 						}
@@ -243,7 +245,7 @@
 		}
 		function update($db, $table, $x, $param) {
 			if ($this->user != "" && $this->database != "" && $db == $this->database) {
-				$db_file = json_decode(file_get_contents($this->dir."/databases/".$db.".json"), 1);
+				$db_file = json_decode(json_decode(file_get_contents($this->dir."/databases/".$db.".json"), 1));
 				$to_up = array();
 				$where = "";
 				$equal = "";
@@ -280,7 +282,7 @@
 												}
 											}
 											$tabs = fopen($this->dir."/databases/".$db.".json", "w");
-											fwrite($tabs, json_encode($db_file));
+											fwrite($tabs, base64_encode(json_encode($db_file)));
 											fclose($tabs);
 										}
 										break 4;
@@ -298,7 +300,7 @@
 		}
 		function delete($db, $table, $param) {
 			if ($this->user != "" && $this->database != "" && $db == $this->database) {
-				$db_file = json_decode(file_get_contents($this->dir."/databases/".$db.".json"), 1);
+				$db_file = json_decode(base64_decode(file_get_contents($this->dir."/databases/".$db.".json"), 1));
 				$to_up = array();
 				$where = "";
 				$equal = "";
@@ -332,7 +334,7 @@
 											}
 
 											$tabs = fopen($this->dir."/databases/".$db.".json", "w");
-											fwrite($tabs, json_encode($db_file));
+											fwrite($tabs, base64_encode(json_encode($db_file)));
 											fclose($tabs);
 										}
 										break 4;
@@ -350,14 +352,14 @@
 		}
 		function deleteDB($db) {
 			if ($this->user != "" && $this->database != "" && $db == $this->database) {
-				$db_file = json_decode(file_get_contents($this->dir."/databases/".$db.".json"), 1);
+				$db_file = json_decode(base64_decode(file_get_contents($this->dir."/databases/".$db.".json"), 1));
 				unlink($this->dir."/databases/".$db.".json");
 				foreach ($this->lock as $k=>$v) {
 					if ($k == $db) {
 						unset($this->lock[$k]);
 						array_values($this->lock);
 						$tabs = fopen($this->dir."/security.json", "w");
-						fwrite($tabs, json_encode($this->lock));
+						fwrite($tabs, base64_encode(json_encode($this->lock)));
 						fclose($tabs);
 						break;
 					}
@@ -367,7 +369,7 @@
 						unset($this->dbs[$k]);
 						array_values($this->dbs);
 						$tabs = fopen($this->dir."/database.json", "w");
-						fwrite($tabs, json_encode($this->dbs));
+						fwrite($tabs, base64_encode(json_encode($this->dbs)));
 						fclose($tabs);
 						break;
 					}
@@ -528,9 +530,9 @@
 		function __construct($dir) {
 			$this->dir = preg_replace("/\/$/","",$dir);
 			$dir = $this->dir;
-			$this->lock = json_decode(file_get_contents($dir."/security.json"), 1);
-			$this->dbs = json_decode(file_get_contents($dir."/database.json"), 1);
-			$this->users = json_decode(file_get_contents($dir."/users.json"), 1);
+			$this->lock = json_decode(base64_decode(file_get_contents($dir."/security.json"), 1));
+			$this->dbs = json_decode(base64_decode(file_get_contents($dir."/database.json"), 1));
+			$this->users = json_decode(base64_decode(file_get_contents($dir."/users.json"), 1));
 		}
 		function login($user, $password) {
 			@session_start();
@@ -561,7 +563,7 @@
 			return $dbs;
 		}
 		function getTabs($db) {
-			$db_file = json_decode(file_get_contents($this->dir."/databases/".$db.".json"), 1);
+			$db_file = json_decode(base64_decode(file_get_contents($this->dir."/databases/".$db.".json"), 1));
 			$array = array();
 			@session_start();
 			foreach ($db_file as $k=>$v) {
@@ -572,7 +574,7 @@
 			return $array;
 		}
 		function getRows($db, $tab) {
-			$db_file = json_decode(file_get_contents($this->dir."/databases/".$db.".json"), 1);
+			$db_file = json_decode(base64_decode(file_get_contents($this->dir."/databases/".$db.".json"), 1));
 			$arr = array();
 			$cnt = 0;
 			$num = 0;
@@ -640,7 +642,7 @@
 		function updateRow($x, $y) {
 			$db = $_SESSION["db"];
 			$table = $_SESSION["table"];
-			$db_file = json_decode(file_get_contents($this->dir."/databases/".$db.".json"), 1);
+			$db_file = json_decode(base64_decode(file_get_contents($this->dir."/databases/".$db.".json"), 1));
 			@session_start();
 			$cnt = -1;
 			foreach ($db_file as $key=>$value) {
@@ -655,7 +657,7 @@
 				break;
 			}
 			$tabs = fopen($this->dir."/databases/".$db.".json", "w");
-			fwrite($tabs, json_encode($db_file));
+			fwrite($tabs, base64_encode(json_encode($db_file)));
 			fclose($tabs);
 		}
 		function deleteRow($x) {
@@ -663,7 +665,7 @@
 			$x = intval($x);
 			$db = $_SESSION["db"];
 			$table = $_SESSION["table"];
-			$db_file = json_decode(file_get_contents($this->dir."/databases/".$db.".json"), 1);
+			$db_file = json_decode(base64_decode(file_get_contents($this->dir."/databases/".$db.".json"), 1));
 			foreach ($db_file as $key=>$value) {
 				foreach ($db_file[$key] as $k=>$v) {
 					foreach ($db_file[$key][$k]["columns"] as $l=>$m) {
@@ -675,7 +677,7 @@
 				break;
 			}
 			$tabs = fopen($this->dir."/databases/".$db.".json", "w");
-			fwrite($tabs, json_encode($db_file));
+			fwrite($tabs, base64_encode(json_encode($db_file)));
 			fclose($tabs);	
 		}
 	}
